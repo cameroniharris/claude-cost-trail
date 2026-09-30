@@ -13,6 +13,9 @@ python3 "<this skill's base directory>/../../bin/cost-trail" <command> [options]
 ```
 
 Use the absolute path shown as this skill's base directory. Python 3.9+, no packages.
+It reads every log each time, so on a large history it takes 10–30 seconds. **Run it
+in the foreground and wait for the output** (allow up to a few minutes); don't send it
+to the background, or the answer may never arrive.
 
 ## Pick the command from the question
 

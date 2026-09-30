@@ -49,7 +49,7 @@ def _label(o):
     return o.name or o.id
 
 
-def _load(args):
+def _load(args, spend_only=False):
     config = _load_config(args.config)
     projects = os.path.expanduser(args.projects or config.get("projects_dir") or "~/.claude/projects")
     if not os.path.isdir(projects):
@@ -59,6 +59,8 @@ def _load(args):
     since, until = _window(args)
     cm = args.claude_model
     all_logs = read_logs(projects, pricing, claude_model=cm)  # spend/forecast always use the full history
+    if spend_only:  # the spend view needs only daily totals: one read, no attribution
+        return pricing, all_logs, all_logs, None, (since, until)
     logs = all_logs if not (since or until) else read_logs(projects, pricing, since, until, claude_model=cm)
     attr = attribute(logs, rules, config.get("server_names"), args.model or config.get("model") or "linear")
     return pricing, all_logs, logs, attr, (since, until)
@@ -82,7 +84,7 @@ def _period_only(window, logs):
 # ---------- terminal output ----------
 
 def cmd_spend(args, data=None):
-    pricing, all_logs, logs, attr, window = data or _load(args)
+    pricing, all_logs, logs, attr, window = data or _load(args, spend_only=True)
     sp = spend(all_logs.daily_cost, daily_by_model=all_logs.daily_by_model)
     rows = {
         "month_to_date": round(sp.month_to_date, 2),

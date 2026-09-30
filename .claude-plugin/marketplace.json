@@ -1,13 +1,13 @@
 {
   "name": "claude-cost-trail",
   "owner": {"name": "Cameron Harris", "url": "https://github.com/cameroniharris"},
-  "metadata": {"description": "Cost attribution for Claude Code, by object", "version": "0.2.0"},
+  "metadata": {"description": "Cost attribution for Claude Code, by object", "version": "0.2.1"},
   "plugins": [
     {
       "name": "claude-cost-trail",
       "source": "./",
       "description": "What your Claude Code work cost, traced to the pages, issues, tables and repos it touched.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {"name": "Cameron Harris", "url": "https://github.com/cameroniharris"},
       "homepage": "https://github.com/cameroniharris/claude-cost-trail",
       "tags": ["cost", "usage", "analytics"]
