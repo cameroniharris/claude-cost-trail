@@ -1,0 +1,79 @@
+{
+  "_comment": "How tool calls map to objects. Copy this file, edit it, and pass --rules (or set \"rules\" in your config) to add systems. See docs/rules.md.",
+
+  "server_signatures": {
+    "_comment": "claude.ai connectors often appear in logs under a random ID instead of a name. A server that exposes any of these tools gets the label.",
+    "Airtable": ["list_bases", "list_tables_for_base", "list_records_for_table", "search_bases"],
+    "Atlassian": ["getConfluencePage", "getJiraIssue", "searchJiraIssuesUsingJql", "getAccessibleAtlassianResources"],
+    "Notion": ["notion-fetch", "notion-search", "notion-update-page"],
+    "Linear": ["list_issue_statuses", "list_cycles", "list_issue_labels"],
+    "GitHub": ["get_file_contents", "search_repositories", "create_pull_request", "list_pull_requests"],
+    "Slack": ["slack_send_message", "slack_read_channel", "slack_search_public"],
+    "Gmail": ["search_threads", "get_thread", "create_draft", "list_labels"],
+    "Google Calendar": ["list_events", "list_calendars", "suggest_time"],
+    "Google Drive": ["search_files", "read_file_content", "download_file_content"],
+    "Readwise": ["reader_list_documents", "readwise_search_highlights"],
+    "Beeminder": ["beeminder_list_goals", "beeminder_get_goal"]
+  },
+
+  "objects": [
+    {"system": "Airtable", "type": "base", "rank": 1,
+     "keys": {"base": "^baseId$"}, "values": {"base": "^app[A-Za-z0-9]{14}$"},
+     "id": "{base}"},
+    {"system": "Airtable", "type": "table", "rank": 2,
+     "keys": {"base": "^baseId$", "table": "^(tableId|table|tableIdOrName)$"},
+     "values": {"base": "^app[A-Za-z0-9]{14}$", "table": "^tbl[A-Za-z0-9]{14}$"},
+     "id": "{table}", "parent": {"type": "base", "id": "{base}"}},
+    {"system": "Airtable", "type": "base", "rank": 1,
+     "pattern": "airtable\\.com/(?P<base>app[A-Za-z0-9]{14})", "id": "{base}"},
+    {"system": "Airtable", "type": "table", "rank": 2,
+     "pattern": "airtable\\.com/(?P<base>app[A-Za-z0-9]{14})/(?P<table>tbl[A-Za-z0-9]{14})",
+     "id": "{table}", "parent": {"type": "base", "id": "{base}"}},
+
+    {"system": "GitHub", "type": "repo", "rank": 1, "servers": "(?i)github",
+     "keys": {"owner": "^owner$", "repo": "^repo$"}, "id": "{owner}/{repo}"},
+    {"system": "GitHub", "type": "issue/PR", "rank": 2, "servers": "(?i)github", "name_from_result": true,
+     "keys": {"owner": "^owner$", "repo": "^repo$", "number": "^(issue_number|pull_number|pullNumber|issueNumber)$"},
+     "id": "{owner}/{repo}#{number}", "parent": {"type": "repo", "id": "{owner}/{repo}"}},
+    {"system": "GitHub", "type": "repo", "rank": 1,
+     "pattern": "github\\.com[/:](?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+?)(?:\\.git)?(?=[/\\s\"'#?)]|$)",
+     "id": "{owner}/{repo}"},
+    {"system": "GitHub", "type": "issue/PR", "rank": 2,
+     "pattern": "github\\.com/(?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)/(?:issues|pull)/(?P<number>\\d+)",
+     "id": "{owner}/{repo}#{number}", "parent": {"type": "repo", "id": "{owner}/{repo}"}},
+    {"system": "GitHub", "type": "repo", "rank": 1, "tools": "^Bash$",
+     "pattern": "\\bgh\\b[^\\n]*?(?:--repo|-R)[ =](?P<owner>[A-Za-z0-9_.-]+)/(?P<repo>[A-Za-z0-9_.-]+)",
+     "id": "{owner}/{repo}"},
+
+    {"system": "Confluence", "type": "page", "rank": 2, "servers": "(?i)(atlassian|confluence)", "name_from_result": true,
+     "keys": {"page": "^(pageId|page_id|contentId)$"}, "values": {"page": "^\\d+$"}, "id": "{page}"},
+    {"system": "Confluence", "type": "page", "rank": 2,
+     "pattern": "[A-Za-z0-9-]+\\.atlassian\\.net/wiki/[^\\s\"']*?/pages/(?:edit-v2/)?(?P<page>\\d+)", "id": "{page}"},
+
+    {"system": "Jira", "type": "issue", "rank": 2, "servers": "(?i)(atlassian|jira)", "name_from_result": true,
+     "keys": {"issue": "^(issueIdOrKey|issueKey|issue_key)$"}, "values": {"issue": "^[A-Z][A-Z0-9]+-\\d+$"}, "id": "{issue}"},
+    {"system": "Jira", "type": "issue", "rank": 2,
+     "pattern": "[A-Za-z0-9-]+\\.atlassian\\.net/browse/(?P<issue>[A-Z][A-Z0-9]+-\\d+)", "id": "{issue}"},
+
+    {"system": "Notion", "type": "page", "rank": 2, "servers": "(?i)notion", "name_from_result": true,
+     "keys": {"page": "^(page_id|pageId|id)$"}, "values": {"page": "^[0-9a-fA-F]{8}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{4}-?[0-9a-fA-F]{12}$"},
+     "id": "{page}", "normalize": {"page": "hex32"}},
+    {"system": "Notion", "type": "page", "rank": 2,
+     "pattern": "notion\\.(?:so|site)/[^\\s\"']*?(?P<page>[0-9a-f]{32})(?![0-9a-f])", "id": "{page}", "normalize": {"page": "hex32"}},
+
+    {"system": "Linear", "type": "issue", "rank": 2, "servers": "(?i)linear", "name_from_result": true,
+     "keys": {"issue": "^(id|issueId|issue_id)$"}, "values": {"issue": "^[A-Z][A-Z0-9]+-\\d+$"}, "id": "{issue}"},
+    {"system": "Linear", "type": "issue", "rank": 2,
+     "pattern": "linear\\.app/[A-Za-z0-9_-]+/issue/(?P<issue>[A-Z][A-Z0-9]+-\\d+)", "id": "{issue}"}
+  ],
+
+  "generic": {
+    "_comment": "For MCP tools no rule above recognized: any ID-looking input becomes an object named after its server. Set enabled to false to track only the systems above.",
+    "enabled": true,
+    "key_pattern": "(^id$|Id$|_id$|ID$|^slug$|_slug$)",
+    "exclude_key_pattern": "(?i)(cursor|token|page_?size|request|session|tool|parent|cloud|workspace|org|user|account|tenant|team|calendar|label|lens|model|agent|trace|client|format|timezone|tab|build|bundle|process|device|udid|window|pane|element|ref)",
+    "_exclude_servers_comment": "Local tools (browsers, simulators, the desktop app) hand out short-lived handles, not shared objects.",
+    "exclude_servers": "^(Claude_|ccd_|claude-in-chrome|computer-use|visualize|terminal|scheduled-tasks|mcp-registry|playwright|puppeteer)",
+    "value_pattern": "^[A-Za-z0-9_.:@-]{4,128}$"
+  }
+}

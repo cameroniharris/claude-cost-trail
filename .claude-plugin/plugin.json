@@ -1,0 +1,10 @@
+{
+  "name": "claude-cost-trail",
+  "version": "0.2.0",
+  "description": "What your Claude Code work cost, traced to the Confluence pages, Jira issues, Airtable tables, GitHub repos and other objects it touched. Reads local session logs; nothing leaves your machine.",
+  "author": {"name": "Cameron Harris", "url": "https://github.com/cameroniharris"},
+  "homepage": "https://github.com/cameroniharris/claude-cost-trail",
+  "repository": "https://github.com/cameroniharris/claude-cost-trail",
+  "license": "MIT",
+  "keywords": ["cost", "usage", "attribution", "tokens", "mcp"]
+}
